@@ -88,6 +88,8 @@ class LanDiscovery:
         s.settimeout(1.0)
         return s
 
+        # This code was written by team nexus
+
     def _announce(self) -> None:
         """Broadcast our address to the whole LAN."""
         msg = MAGIC + b"|ANNOUNCE|" + f"{self._host}:{self._port}".encode()
