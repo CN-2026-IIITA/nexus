@@ -347,7 +347,7 @@ class DHTNode(AntigravityNode):
         logger.info(f"[DHT] Stored {msg.key[:8]}… ({len(value)} B) from {addr[0]}")
         sender = msg.get_sender_anr()
         if sender:
-            asyncio.ensure_future(self._maybe_add(sender))
+            asyncio.ensure_future(self._maybe_add(sender, addr[0]))
 
     # ── FIND_VALUE ────────────────────────────────────────────────────────
 
@@ -413,7 +413,7 @@ class DHTNode(AntigravityNode):
                            addr: Tuple[str, int]) -> None:
         sender = msg.get_sender_anr()
         if sender:
-            asyncio.ensure_future(self._maybe_add(sender))
+            asyncio.ensure_future(self._maybe_add(sender, addr[0]))
         logger.info(f"[DHT] FIND_VALUE {msg.key[:8]}… from {addr[0]}")
 
         value = self.storage.get(msg.key)

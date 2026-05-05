@@ -107,8 +107,20 @@ class AntigravityNode:
         self.port = port
         self.started_at: float = time.time()
 
+        # Compute advertised IP (don't advertise 0.0.0.0 to peers)
+        advertised_ip = host
+        if advertised_ip in ("0.0.0.0", "127.0.0.1", ""):
+            import socket as _s
+            try:
+                s = _s.socket(_s.AF_INET, _s.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                advertised_ip = s.getsockname()[0]
+                s.close()
+            except Exception:
+                advertised_ip = "127.0.0.1"
+
         # Build our own ANR
-        self.anr = ANR.create(keypair, host, port)
+        self.anr = ANR.create(keypair, advertised_ip, port)
 
         # Routing table
         self.routing_table = RoutingTable(self.anr, k=k)
@@ -193,7 +205,7 @@ class AntigravityNode:
              remote_ip=addr[0], remote_port=addr[1], msg_type="PING",
              remote_id=sender_anr.node_id if sender_anr else "")
         if sender_anr:
-            asyncio.ensure_future(self._maybe_add(sender_anr))
+            asyncio.ensure_future(self._maybe_add(sender_anr, addr[0]))
 
         pong = PongMessage.build(msg, self.anr)
         self._send(pong, addr)
@@ -209,7 +221,7 @@ class AntigravityNode:
             _log("recv_pong_structured", f"[RECV] PONG ← {addr[0]}:{addr[1]}",
                  remote_ip=addr[0], remote_port=addr[1], msg_type="PONG",
                  remote_id=sender_anr.node_id)
-            asyncio.ensure_future(self._maybe_add(sender_anr))
+            asyncio.ensure_future(self._maybe_add(sender_anr, addr[0]))
 
     # ------------------------------------------------------------------ #
     # FIND_NODE / NEIGHBORS
@@ -253,7 +265,7 @@ class AntigravityNode:
              remote_ip=addr[0], remote_port=addr[1], msg_type="FIND_NODE",
              remote_id=sender_anr.node_id if sender_anr else "")
         if sender_anr:
-            asyncio.ensure_future(self._maybe_add(sender_anr))
+            asyncio.ensure_future(self._maybe_add(sender_anr, addr[0]))
 
         closest = self.routing_table.find_closest(msg.target_id, count=K)
 
@@ -308,11 +320,14 @@ class AntigravityNode:
     # Routing table integration
     # ------------------------------------------------------------------ #
 
-    async def _maybe_add(self, anr: ANR) -> None:
+    async def _maybe_add(self, anr: ANR, real_ip: str = None) -> None:
         """Add *anr* to routing table; PING LRS if bucket is full."""
         if not anr.verify():
             logger.warning(f"Dropping ANR with invalid signature: {anr.short_id()}")
             return
+
+        if real_ip and anr.ip in ("0.0.0.0", "127.0.0.1", ""):
+            anr.ip = real_ip
 
         lrs = await self.routing_table.add(anr)
         if lrs is None:
@@ -346,7 +361,7 @@ class AntigravityNode:
             if pong:
                 sender_anr = pong.get_sender_anr()
                 if sender_anr:
-                    await self._maybe_add(sender_anr)
+                    await self._maybe_add(sender_anr, host)
                     responsive.append((host, port))
                     _log("bootstrap_peer_ok", f"[BOOTSTRAP] Seed {host}:{port} is alive ✓")
             else:
