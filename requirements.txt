@@ -1,0 +1,11 @@
+# Project Antigravity — Python dependencies
+# Install with:  pip install -r requirements.txt
+
+# secp256k1 cryptography (fast C bindings)
+coincurve>=18.0.0
+
+# Qt6 desktop GUI
+PyQt6>=6.6.0
+
+# Standard library only beyond this point
+# (asyncio, hashlib, json, socket, threading, dataclasses — all built-in)
