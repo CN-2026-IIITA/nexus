@@ -81,7 +81,6 @@ class KBucket:
             return None
 
         # Bucket full → add to replacement cache and return LRS for verification
-        #thala for a reason
         self._replacement_cache[nid] = anr
         # Trim replacement cache
         while len(self._replacement_cache) > self.k:

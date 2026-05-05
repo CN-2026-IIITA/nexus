@@ -26,12 +26,9 @@ import webbrowser
 # Windows: fix asyncio subprocess handling (only needed on Python < 3.12)
 if sys.platform == "win32" and sys.version_info < (3, 12):
     import asyncio
-    # Ensures subprocess + asyncio compatibility on older Windows Python versions
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-# Root directory of the project
 PROJECT_DIR   = os.path.dirname(os.path.abspath(__file__))
-# Path to React dashboard frontend
 DASHBOARD_DIR = os.path.join(PROJECT_DIR, "dashboard")
 
 def _resolve_python() -> str:
@@ -56,11 +53,9 @@ def _resolve_python() -> str:
     # 3. Last resort — let the OS sort it out
     return "python"
 
-# Final resolved Python interpreter path used for launching subprocesses
 PYTHON = _resolve_python()
 
 # ── ANSI colours ───────────────────────────────────────────────────────────
-# Terminal color constants for prettier console UI
 GREEN  = "\033[92m"
 CYAN   = "\033[96m"
 YELLOW = "\033[93m"
@@ -68,7 +63,6 @@ RED    = "\033[91m"
 BOLD   = "\033[1m"
 RESET  = "\033[0m"
 
-# Rotating color palette for multiple node labels
 NODE_COLORS = [
     "\033[96m", "\033[92m", "\033[95m", "\033[93m",
     "\033[94m", "\033[91m", "\033[97m", "\033[36m",
@@ -76,7 +70,6 @@ NODE_COLORS = [
 
 # ── Banner ─────────────────────────────────────────────────────────────────
 def banner(n: int):
-    # Displays startup banner for launcher
     print(f"""
 {BOLD}{CYAN}
   ╔══════════════════════════════════════════════════════════╗
@@ -88,19 +81,16 @@ def banner(n: int):
 
 # ── Install Python deps ────────────────────────────────────────────────────
 def install_python_deps():
-    # Verifies required Python packages before launch
     print(f"{YELLOW}[SETUP] Checking Python dependencies...{RESET}")
     deps = ["cryptography", "PyQt6"]
     missing = []
     for pkg in deps:
-        # Attempt import test for each dependency
         r = subprocess.run([PYTHON, "-c", f"import {pkg.split('[')[0]}"],
                            capture_output=True)
         if r.returncode != 0:
             missing.append(pkg)
     if missing:
         print(f"{YELLOW}        Installing: {', '.join(missing)}{RESET}")
-        # Silent pip install for missing packages
         subprocess.check_call([PYTHON, "-m", "pip", "install", "-q"] + missing)
         print(f"{GREEN}        ✓ Installed.{RESET}")
     else:
@@ -108,7 +98,6 @@ def install_python_deps():
 
 # ── Install & start React dashboard ───────────────────────────────────────
 def start_dashboard() -> "subprocess.Popen | None":
-    # Skip dashboard if frontend folder is missing
     if not os.path.isdir(DASHBOARD_DIR):
         print(f"{YELLOW}[DASHBOARD] Not found — skipping.{RESET}")
         return None
@@ -136,7 +125,7 @@ def start_dashboard() -> "subprocess.Popen | None":
                               stdout=subprocess.DEVNULL,
                               stderr=subprocess.DEVNULL)
 
-    # Start React/Vite dev server
+    # Start dev server
     proc = subprocess.Popen(
         [npm, "run", "dev", "--", "--port", "5173"],
         cwd=DASHBOARD_DIR,
@@ -150,26 +139,20 @@ def start_dashboard() -> "subprocess.Popen | None":
 
 # ── Stream node logs ───────────────────────────────────────────────────────
 def stream_output(proc, label, color):
-    # Continuously pipes subprocess logs into launcher console
     for line in proc.stdout:
         line = line.rstrip()
-        # Filters noisy Qt + warning spam
         if line and "qt.qpa" not in line and "WARNING" not in line:
             print(f"{color}[{label}]{RESET} {line}")
 
 # ── Launch a single P2P node ───────────────────────────────────────────────
 def launch_node(port: int, host: str, bootstrap: str = None,
                 extra_args: list = None) -> subprocess.Popen:
-    # Base command to launch app.py node
     cmd = [PYTHON, os.path.join(PROJECT_DIR, "app.py"),
            "--host", host, "--port", str(port)]
-    # Add bootstrap seed if joining existing network
     if bootstrap:
         cmd += ["--bootstrap", bootstrap]
-    # Add optional flags such as disabling discovery
     if extra_args:
         cmd += extra_args
-    # Spawn subprocess for node
     return subprocess.Popen(
         cmd, cwd=PROJECT_DIR,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -178,7 +161,6 @@ def launch_node(port: int, host: str, bootstrap: str = None,
 
 # ── Main ───────────────────────────────────────────────────────────────────
 def main():
-    # Command-line argument parser
     parser = argparse.ArgumentParser(
         description="Project Antigravity — P2P Node Launcher",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -203,7 +185,6 @@ Examples:
                         help="Don't start the React dashboard")
     args = parser.parse_args()
 
-    # Extract configuration
     n           = args.nodes
     start_port  = args.start_port
     host        = args.host
@@ -223,23 +204,19 @@ Examples:
     print()
 
     # ── P2P nodes ─────────────────────────────────────────────────────────
-    # First node becomes local seed
-    seed_addr  = f"127.0.0.1:{start_port}"
+    seed_addr  = f"127.0.0.1:{start_port}"   # local seed (first node)
     processes  = []
 
     print(f"{BOLD}Launching {n} P2P node(s) on {host}, ports {start_port}–{start_port+n-1}...{RESET}")
     print(f"{CYAN}Auto-discovery: {'ON 🔍 — nodes will find peers on the LAN automatically' if discovery else 'OFF'}{RESET}\n")
 
-    # Discovery flag handling
     extra = [] if discovery else ["--no-discovery"]
 
     for i in range(n):
         port  = start_port + i
-        # Human-readable labels: Node A, Node B...
         label = f"Node {chr(65 + i) if i < 26 else str(i+1)}"
         color = NODE_COLORS[i % len(NODE_COLORS)]
 
-        # First node is seed, others bootstrap to it
         is_seed   = (i == 0)
         bootstrap = None if is_seed else seed_addr
 
@@ -250,7 +227,6 @@ Examples:
         role = "(seed)" if is_seed else f"(→ {seed_addr})"
         print(f"  {color}▶ {label}{RESET}  {host}:{port}  {role}")
 
-        # Seed gets extra startup time
         time.sleep(2.0 if is_seed else 0.5)
 
     # Stream logs in background threads
@@ -272,7 +248,6 @@ Examples:
 
     # ── Graceful shutdown ─────────────────────────────────────────────────
     def shutdown(sig, frame):
-        # Handles Ctrl+C / termination cleanly
         print(f"\n{RED}[SHUTDOWN] Stopping everything...{RESET}")
         for proc, label, _ in all_procs:
             try: proc.terminate()
@@ -285,11 +260,9 @@ Examples:
         print(f"{GREEN}[SHUTDOWN] Done. Goodbye!{RESET}")
         sys.exit(0)
 
-    # Register OS signal handlers
     signal.signal(signal.SIGINT,  shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
-    # Keep launcher alive while nodes run
     while True:
         if all(p.poll() is not None for p, _, _ in processes):
             print(f"{YELLOW}All nodes exited.{RESET}")
@@ -297,5 +270,4 @@ Examples:
         time.sleep(1)
 
 if __name__ == "__main__":
-    # Entry point
     main()

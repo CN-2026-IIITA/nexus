@@ -1,0 +1,45 @@
+2026-05-05 14:28:00,189 [INFO] antigravity.app — Generated new ephemeral key pair
+2026-05-05 14:28:00,189 [INFO] antigravity.app — Using UDP port 9000
+2026-05-05 14:28:00,205 [INFO] antigravity.network — [NODE] Started on 0.0.0.0:9000 — ID: 40ca1a938be70361…
+2026-05-05 14:28:00,205 [INFO] antigravity.dht — [TCP] Chunk server listening on 0.0.0.0:9001
+2026-05-05 14:28:00,205 [INFO] antigravity.discovery — [DISCOVERY] Started — broadcasting on port 19099
+2026-05-05 14:28:00,205 [INFO] antigravity.app — [DISCOVERY] Auto-discovery ON — LAN IP: 10.111.147.114:9000
+2026-05-05 14:28:02,700 [INFO] antigravity.discovery — [DISCOVERY] 🔍 Found peer: 10.111.147.251:9000
+2026-05-05 14:28:02,700 [INFO] antigravity.network — [BOOTSTRAP] Initiating with 1 seed(s)…
+2026-05-05 14:28:02,700 [INFO] antigravity.network — [SENT] PING → 10.111.147.251:9000  (id=7aad40ba)
+2026-05-05 14:28:07,713 [INFO] antigravity.network — [TIMEOUT] No PONG from 10.111.147.251:9000
+2026-05-05 14:28:07,713 [INFO] antigravity.network — [BOOTSTRAP] Seed 10.111.147.251:9000 did not respond ✗
+2026-05-05 14:28:07,713 [INFO] antigravity.network — [BOOTSTRAP] Complete — 0 node(s) in routing table.
+2026-05-05 14:28:15,346 [INFO] antigravity.discovery — [DISCOVERY] 🔍 Found peer: 10.111.147.114:9001
+2026-05-05 14:28:15,346 [INFO] antigravity.network — [BOOTSTRAP] Initiating with 1 seed(s)…
+2026-05-05 14:28:15,346 [INFO] antigravity.network — [SENT] PING → 10.111.147.114:9001  (id=60282e51)
+C:\Users\ASUS\Downloads\gemini 7\.gemini\antigravity\scratch\project_antigravity\chat\chat_manager.py:73: RuntimeWarning: coroutine 'DHTNode._handle_datagram' was never awaited
+  self._original_handle_datagram(data, addr)
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+2026-05-05 14:28:15,367 [ERROR] asyncio — Exception in callback _ProactorDatagramTransport._loop_reading(<_OverlappedF....114', 9001))>)
+handle: <Handle _ProactorDatagramTransport._loop_reading(<_OverlappedF....114', 9001))>)>
+Traceback (most recent call last):
+  File "C:\Program Files\Python312\Lib\asyncio\events.py", line 88, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Program Files\Python312\Lib\asyncio\proactor_events.py", line 589, in _loop_reading
+    self._protocol.datagram_received(data, addr)
+  File "C:\Users\ASUS\Downloads\gemini 7\.gemini\antigravity\scratch\project_antigravity\network.py", line 73, in datagram_received
+    asyncio.ensure_future(self._node._handle_datagram(data, addr))
+  File "C:\Program Files\Python312\Lib\asyncio\tasks.py", line 689, in ensure_future
+    raise TypeError('An asyncio.Future, a coroutine or an awaitable '
+TypeError: An asyncio.Future, a coroutine or an awaitable is required
+2026-05-05 14:28:17,003 [ERROR] asyncio — Exception in callback _ProactorDatagramTransport._loop_reading(<_OverlappedF....114', 9001))>)
+handle: <Handle _ProactorDatagramTransport._loop_reading(<_OverlappedF....114', 9001))>)>
+Traceback (most recent call last):
+  File "C:\Program Files\Python312\Lib\asyncio\events.py", line 88, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Program Files\Python312\Lib\asyncio\proactor_events.py", line 589, in _loop_reading
+    self._protocol.datagram_received(data, addr)
+  File "C:\Users\ASUS\Downloads\gemini 7\.gemini\antigravity\scratch\project_antigravity\network.py", line 73, in datagram_received
+    asyncio.ensure_future(self._node._handle_datagram(data, addr))
+  File "C:\Program Files\Python312\Lib\asyncio\tasks.py", line 689, in ensure_future
+    raise TypeError('An asyncio.Future, a coroutine or an awaitable '
+TypeError: An asyncio.Future, a coroutine or an awaitable is required
+2026-05-05 14:28:20,351 [INFO] antigravity.network — [TIMEOUT] No PONG from 10.111.147.114:9001
+2026-05-05 14:28:20,351 [INFO] antigravity.network — [BOOTSTRAP] Seed 10.111.147.114:9001 did not respond ✗
+2026-05-05 14:28:20,352 [INFO] antigravity.network — [BOOTSTRAP] Complete — 0 node(s) in routing table.

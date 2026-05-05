@@ -161,9 +161,6 @@ class AntigravityNode:
     # Sending helpers
     # ------------------------------------------------------------------ #
 
-
-
-
     def _send(self, msg, addr: Tuple[str, int]) -> None:
         if self._transport is None:
             raise RuntimeError("Transport not ready — call start() first")

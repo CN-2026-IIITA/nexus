@@ -161,8 +161,6 @@ class _RingCanvas(QWidget):
 
     # ── Animation ──────────────────────────────────────────────────────
 
-    #this code by written by team nexus
-
     def _tick(self) -> None:
         changed = bool(self._packets)
         for p in self._packets[:]:
