@@ -306,7 +306,7 @@ class DHTNode(AntigravityNode):
         - Small values (manifests): broadcast to ALL known peers so any
           machine on the LAN can find the file key immediately.
         """
-        MAX_INLINE = 800
+        MAX_INLINE = 400
 
         self.storage.store(key, value)
 
@@ -420,7 +420,7 @@ class DHTNode(AntigravityNode):
         if value is not None:
             # Always check if the stored value is itself a pointer (already small)
             # or actual data that is too large to send inline
-            MAX_INLINE = 800
+            MAX_INLINE = 400
             try:
                 parsed = json.loads(value.decode())
                 is_pointer = "tcp_host" in parsed
