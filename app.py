@@ -96,8 +96,6 @@ def parse_args() -> argparse.Namespace:
 # Main
 # ---------------------------------------------------------------------------
 
-# Our enemies are many but are equals are none.... # Team Nexus
-
 def main() -> None:
     args = parse_args()
 
@@ -208,6 +206,38 @@ def main() -> None:
         loop.call_soon_threadsafe(loop.stop)
 
     app.aboutToQuit.connect(_on_quit)
+
+    # ── Chat Integration (CLI) ────────────────────────────────────────
+    from chat.chat_manager import ChatManager
+    from chat.chat_storage import ChatStorage
+
+    chat_storage = ChatStorage()
+    chat_manager = ChatManager(node, chat_storage)
+
+    def chat_cli_loop():
+        """Runs in a daemon thread to avoid blocking the asyncio networking loop."""
+        while True:
+            try:
+                cmd = input().strip()
+                if cmd.startswith("/chat "):
+                    parts = cmd.split(" ", 2)
+                    if len(parts) >= 3:
+                        peer_id = parts[1]
+                        message = parts[2]
+                        # Safely dispatch the async send function into the networking loop
+                        asyncio.run_coroutine_threadsafe(
+                            chat_manager.send_message(peer_id, message),
+                            loop
+                        )
+                    else:
+                        print("Usage: /chat <peer_id> <message>")
+            except EOFError:
+                break
+
+    cli_thread = threading.Thread(target=chat_cli_loop, daemon=True, name="chat-cli")
+    cli_thread.start()
+    # ──────────────────────────────────────────────────────────────────
+
     sys.exit(app.exec())
 
 
