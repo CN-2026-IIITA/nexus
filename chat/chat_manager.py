@@ -57,7 +57,7 @@ class ChatManager:
         self._original_handle_datagram = self.node._handle_datagram
         self.node._handle_datagram = self._handle_datagram
 
-    def _handle_datagram(self, data: bytes, addr: Tuple[str, int]) -> None:
+    async def _handle_datagram(self, data: bytes, addr: Tuple[str, int]) -> None:
         """Route packet to chat handlers or fallback to the original network layer."""
         msg = _decode_chat(data)
         if msg:
@@ -70,7 +70,7 @@ class ChatManager:
             return
         
         # Fallback to existing routing/DHT logic
-        self._original_handle_datagram(data, addr)
+        await self._original_handle_datagram(data, addr)
 
     def _handle_chat_message(self, msg: ChatMessage, addr: Tuple[str, int]) -> None:
         print(f"\n[CHAT] {msg.sender_id[:8]}: {msg.content}")
