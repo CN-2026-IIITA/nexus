@@ -92,9 +92,18 @@ class ChatManager:
 
     async def send_message(self, peer_id: str, content: str) -> bool:
         # Utilize existing Kademlia routing table to resolve the peer's address
-        target_anr = self.node.routing_table.get_node(peer_id)
+        # Support both full 64-char IDs and short 8-char prefixes
+        target_anr = None
+        for bucket in self.node.routing_table.non_empty_buckets:
+            for anr in bucket.nodes:
+                if anr.node_id.startswith(peer_id):
+                    target_anr = anr
+                    break
+            if target_anr:
+                break
+                
         if not target_anr:
-            print(f"[CHAT] Error: Peer {peer_id[:8]} not found in routing table.")
+            print(f"[CHAT] Error: Peer {peer_id} not found in routing table.")
             return False
 
         msg = ChatMessage(
