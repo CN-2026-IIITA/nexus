@@ -21,7 +21,6 @@ from crypto import ANR
 # ---------------------------------------------------------------------------
 
 class MsgType(str, Enum):
-    # Defines all valid RPC message categories used in the protocol
     PING        = "PING"
     PONG        = "PONG"
     FIND_NODE   = "FIND_NODE"
@@ -34,18 +33,15 @@ class MsgType(str, Enum):
 
 @dataclass
 class _BaseMessage:
-    # Common fields shared by all protocol messages
     msg_type: str
-    msg_id: str = field(default_factory=lambda: os.urandom(8).hex())  # unique random identifier
+    msg_id: str = field(default_factory=lambda: os.urandom(8).hex())
     sender_anr: Optional[dict] = None      # always include sender's ANR
 
     def to_bytes(self) -> bytes:
-        # Serialize message dataclass into compact JSON bytes for UDP transmission
         return json.dumps(asdict(self), separators=(",", ":")).encode()
 
     @classmethod
     def from_bytes(cls, raw: bytes) -> "_BaseMessage":
-        # Deserialize incoming JSON bytes and dynamically dispatch to correct message subclass
         d = json.loads(raw.decode())
         msg_type = d.get("msg_type")
         dispatchers = {
@@ -56,13 +52,10 @@ class _BaseMessage:
         }
         klass = dispatchers.get(msg_type)
         if klass is None:
-            # Reject unknown or malformed protocol types
             raise ValueError(f"Unknown msg_type: {msg_type}")
-        # Only pass fields relevant to the target dataclass constructor
         return klass(**{k: v for k, v in d.items() if k in klass.__dataclass_fields__})
 
     def get_sender_anr(self) -> Optional[ANR]:
-        # Reconstruct sender ANR object from dictionary form if present
         if self.sender_anr:
             return ANR.from_dict(self.sender_anr)
         return None
@@ -79,11 +72,10 @@ class PingMessage(_BaseMessage):
     can update its routing table even if it hasn't seen this node before.
     """
     msg_type: str = MsgType.PING
-    timestamp: float = field(default_factory=time.time)  # records send time
+    timestamp: float = field(default_factory=time.time)
 
     @classmethod
     def build(cls, sender_anr: ANR) -> "PingMessage":
-        # Convenience constructor ensuring ANR is serialized correctly
         return cls(sender_anr=sender_anr.to_dict())
 
 
@@ -96,11 +88,10 @@ class PongMessage(_BaseMessage):
     """Reply to a PING.  Echoes the original msg_id for correlation."""
     msg_type: str = MsgType.PONG
     ping_id: str = ""                      # msg_id of the PING being acknowledged
-    timestamp: float = field(default_factory=time.time)  # response creation time
+    timestamp: float = field(default_factory=time.time)
 
     @classmethod
     def build(cls, ping: PingMessage, sender_anr: ANR) -> "PongMessage":
-        # Builds a response tied directly to a specific PING request
         return cls(ping_id=ping.msg_id, sender_anr=sender_anr.to_dict())
 
 
@@ -118,7 +109,6 @@ class FindNodeMessage(_BaseMessage):
 
     @classmethod
     def build(cls, target_id: str, sender_anr: ANR) -> "FindNodeMessage":
-        # Builds a lookup request for closest peers to a given node ID
         return cls(target_id=target_id, sender_anr=sender_anr.to_dict())
 
 
@@ -134,7 +124,7 @@ class NeighborsMessage(_BaseMessage):
     """
     msg_type: str = MsgType.NEIGHBORS
     find_node_id: str = ""                 # msg_id of the originating FIND_NODE
-    nodes: List[dict] = field(default_factory=list)  # serialized nearby nodes
+    nodes: List[dict] = field(default_factory=list)
 
     @classmethod
     def build(
@@ -143,7 +133,6 @@ class NeighborsMessage(_BaseMessage):
         closest_anrs: List[ANR],
         sender_anr: ANR,
     ) -> "NeighborsMessage":
-        # Packages nearest-node results while preserving request correlation
         return cls(
             find_node_id=find_node_msg.msg_id,
             nodes=[a.to_dict() for a in closest_anrs],
@@ -151,7 +140,6 @@ class NeighborsMessage(_BaseMessage):
         )
 
     def get_nodes(self) -> List[ANR]:
-        # Convert raw node dictionaries back into ANR objects
         return [ANR.from_dict(d) for d in self.nodes]
 
 
@@ -159,13 +147,14 @@ class NeighborsMessage(_BaseMessage):
 # Serialization helpers
 # ---------------------------------------------------------------------------
 
+# computer networks is fun
+# this code was written by team nexus
+
 MAX_UDP_PAYLOAD = 1280   # safe MTU limit in bytes
 
 def encode_message(msg: _BaseMessage) -> bytes:
-    # Converts message to bytes and enforces UDP payload safety
     data = msg.to_bytes()
     if len(data) > MAX_UDP_PAYLOAD:
-        # Prevent oversized datagrams that may fragment or fail
         raise ValueError(
             f"Message of type {msg.msg_type} exceeds {MAX_UDP_PAYLOAD} bytes "
             f"({len(data)} bytes).  Consider splitting NEIGHBORS payload."
@@ -174,5 +163,4 @@ def encode_message(msg: _BaseMessage) -> bytes:
 
 
 def decode_message(raw: bytes) -> _BaseMessage:
-    # Decodes raw UDP payload into the appropriate protocol message object
     return _BaseMessage.from_bytes(raw)
