@@ -147,6 +147,9 @@ class NeighborsMessage(_BaseMessage):
 # Serialization helpers
 # ---------------------------------------------------------------------------
 
+# computer networks is fun
+# this code was written by team nexus
+
 MAX_UDP_PAYLOAD = 1280   # safe MTU limit in bytes
 
 def encode_message(msg: _BaseMessage) -> bytes:
