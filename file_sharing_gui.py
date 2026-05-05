@@ -421,11 +421,13 @@ class FileSharePanel(QWidget):
             self._dl_status.setText(f"✅ Saved to: {path}")
             self._log_line(f"[DOWNLOAD] Saved {path}", C_GREEN)
             self._refresh_files_list()
+            #exception handling
         else:
             self._dl_status.setText("❌ File not found in DHT.")
             self._log_line("[DOWNLOAD] Not found.", C_RED)
 
     @pyqtSlot()
+
     def _copy_selected_key(self):
         item = self._files_list.currentItem()
         if item:
