@@ -13,7 +13,7 @@ import threading
 import time
 from collections import OrderedDict
 from typing import Dict, Optional
-
+# Logger for debugging storage operations
 logger = logging.getLogger("antigravity.storage")
 
 _BASE = os.path.dirname(os.path.abspath(__file__))
@@ -178,4 +178,5 @@ class DHTStorage:
             try:
                 os.remove(p)
             except FileNotFoundError:
-                pass
+                pass 
+                  
