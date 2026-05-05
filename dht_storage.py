@@ -20,6 +20,7 @@ _BASE = os.path.dirname(os.path.abspath(__file__))
 # Default directories
 DEFAULT_STORAGE_DIR  = os.path.join(_BASE, "dht_data")
 DEFAULT_DOWNLOAD_DIR = os.path.join(_BASE, "downloads")
+# Memory cache limit (LRU)
 MAX_MEMORY_BYTES     = 128 * 1024 * 1024   # 128 MB LRU cache
 DEFAULT_TTL          = 86_400              # 24 hours
 
