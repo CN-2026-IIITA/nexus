@@ -1,6 +1,6 @@
-# Nexus P2P - Decentralized Peer-to-Peer Network
+# Nexus - Using Kademlia Algorithm
 
-Nexus P2P is a robust, decentralized peer-to-peer (P2P) networking application built on the Kademlia Distributed Hash Table (DHT) protocol. It provides secure node discovery, routing, file sharing capabilities, and a real-time network visualization dashboard. The project is designed for scalability, security, and ease of use, featuring a modern PyQt6 GUI interface.
+Nexus is a robust networking application built on the Kademlia Distributed Hash Table (DHT) protocol. It provides secure node discovery, routing, file sharing capabilities, and a real-time network visualization dashboard. The project is designed for scalability, security, and ease of use, featuring a modern PyQt6 GUI interface.
 
 ## Features
 
