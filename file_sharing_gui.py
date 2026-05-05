@@ -207,6 +207,12 @@ class FileSharePanel(QWidget):
 
         self._upload_btn = QPushButton("⬆  Upload to DHT")
         self._upload_btn.setStyleSheet(_BTN_PURPLE)
+        ag_logger = logging.getLogger("antigravity")
+        self._log_handler = LogHandler(self._log_signal)
+        ag_logger.addHandler(self._log_handler)
+        
+        fm_logger = logging.getLogger("file_manager")
+        fm_logger.addHandler(self._log_handler)
         self._upload_btn.setEnabled(False)
         self._upload_btn.clicked.connect(self._do_upload)
         btn_row.addWidget(self._upload_btn)
