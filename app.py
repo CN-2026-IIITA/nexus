@@ -13,6 +13,7 @@ import os
 import socket
 import sys
 import threading
+import time
 
 from PyQt6.QtWidgets import QApplication
 
@@ -20,10 +21,11 @@ from crypto import NodeKeypair
 from network import AntigravityNode
 from gui import MainWindow
 from discovery import LanDiscovery
-# ── File sharing extensions (additive — no existing code changed) ──────────
+# ── File sharing + chat extensions (additive — no existing code changed) ───
 from dht_storage import DHTStorage
 from rpc_extensions import DHTNode
 from file_sharing_gui import FileSharePanel
+from chat_gui import ChatPanel
 
 logging.basicConfig(
     level=logging.INFO,
@@ -187,10 +189,16 @@ def main() -> None:
     window = MainWindow(loop=loop)
     window.show()
 
-    # Attach node once it is running
-    # Give the background thread a moment to bind the socket
-    import time
-    time.sleep(0.3)
+    # FIX: Poll until the node is actually running instead of using a fixed
+    # sleep(0.3) which is a race condition — the asyncio thread may not have
+    # bound the socket yet, especially under load or on slow machines.
+    deadline = time.time() + 5.0
+    while not node._running and time.time() < deadline:
+        time.sleep(0.05)
+
+    if not node._running:
+        logger.warning("Node did not start within 5 seconds — attaching anyway.")
+
     window.attach_node(node)
 
     # ── File Sharing tab (additive, zero gui.py changes) ──────────────────
@@ -201,43 +209,17 @@ def main() -> None:
     if _tab_w is not None:
         _tab_w.addTab(_fs_panel, "📁 File Sharing")
 
+    # ── Chat tab ────────────────────────────────────────────────────────────
+    _chat_panel = ChatPanel()
+    if _tab_w is not None:
+        _tab_w.addTab(_chat_panel, "💬 Chat")
+    _chat_panel.attach(node, loop)
+
     # On quit, cancel the asyncio loop
     def _on_quit():
         loop.call_soon_threadsafe(loop.stop)
 
     app.aboutToQuit.connect(_on_quit)
-
-    # ── Chat Integration (CLI) ────────────────────────────────────────
-    from chat.chat_manager import ChatManager
-    from chat.chat_storage import ChatStorage
-
-    chat_storage = ChatStorage()
-    chat_manager = ChatManager(node, chat_storage)
-
-    def chat_cli_loop():
-        """Runs in a daemon thread to avoid blocking the asyncio networking loop."""
-        while True:
-            try:
-                cmd = input().strip()
-                if cmd.startswith("/chat "):
-                    parts = cmd.split(" ", 2)
-                    if len(parts) >= 3:
-                        peer_id = parts[1]
-                        message = parts[2]
-                        # Safely dispatch the async send function into the networking loop
-                        asyncio.run_coroutine_threadsafe(
-                            chat_manager.send_message(peer_id, message),
-                            loop
-                        )
-                    else:
-                        print("Usage: /chat <peer_id> <message>")
-            except EOFError:
-                break
-
-    cli_thread = threading.Thread(target=chat_cli_loop, daemon=True, name="chat-cli")
-    cli_thread.start()
-    # ──────────────────────────────────────────────────────────────────
-
     sys.exit(app.exec())
 
 
