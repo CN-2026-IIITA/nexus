@@ -155,7 +155,7 @@ def launch_node(port: int, host: str, bootstrap: str = None,
         cmd += extra_args
     return subprocess.Popen(
         cmd, cwd=PROJECT_DIR,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         text=True, bufsize=1,
     )
 
@@ -263,11 +263,38 @@ Examples:
     signal.signal(signal.SIGINT,  shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
+    # ── Input forwarding loop ─────────────────────────────────────────────
+    # Instead of just sleeping, we read from the terminal and forward
+    # commands like /chat to the first node's stdin.
+    import select
     while True:
         if all(p.poll() is not None for p, _, _ in processes):
             print(f"{YELLOW}All nodes exited.{RESET}")
             break
-        time.sleep(1)
+        try:
+            # Non-blocking check for Windows/Linux
+            if sys.platform == "win32":
+                import msvcrt
+                if msvcrt.kbhit():
+                    cmd = input().strip()
+                    if cmd and processes:
+                        proc = processes[0][0]
+                        proc.stdin.write(cmd + "\n")
+                        proc.stdin.flush()
+                else:
+                    time.sleep(0.1)
+            else:
+                i, _, _ = select.select([sys.stdin], [], [], 0.1)
+                if i:
+                    cmd = sys.stdin.readline().strip()
+                    if cmd and processes:
+                        proc = processes[0][0]
+                        proc.stdin.write(cmd + "\n")
+                        proc.stdin.flush()
+        except (EOFError, KeyboardInterrupt):
+            break
+        except Exception:
+            time.sleep(0.1)
 
 if __name__ == "__main__":
     main()
