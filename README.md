@@ -92,6 +92,8 @@ Example:
 ```bash
 python app.py --bootstrap 192.168.1.100:9000 --save-key mykey.hex
 ```
+WorkFlow
+<img width="746" height="1196" alt="image" src="https://github.com/user-attachments/assets/dcefa16f-0dc4-45d1-8e42-d35234d4a935" />
 
 ## Usage
 
